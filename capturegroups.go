@@ -7,7 +7,7 @@ import (
 )
 
 func captureGroupsEncode(pre_pattern string, capture_groups []int, pattern, input string) string {
-	matchedPrePatternCaptureGroups := matchGroups(pre_pattern, capture_groups, input)
+	matchedPrePatternCaptureGroups := matchGroupsByNumber(pre_pattern, capture_groups, input)
 	fpeInput := computeFpeInput(matchedPrePatternCaptureGroups, pattern)
 
 	return fpeEncode(pattern, fpeInput)
@@ -44,6 +44,8 @@ func computeFpeInput(groupValues []string, pattern string) string {
 	return input.String()
 }
 
+// `(\d\d)-(\d\d)`
+// []
 func findGroupIndices(pattern string) [][]int {
 	// This is a toy implementation.
 	// Is there a reliable way to implement this function?
@@ -52,11 +54,10 @@ func findGroupIndices(pattern string) [][]int {
 	return re.FindAllStringIndex(pattern, -1)
 }
 
-// matchGroups returns a map where the key is the group number, and the value is the matched substring
-// For example: matchGroups(`(\d\d)-(\d\d)-(\d\d)`, []int{1,3}, "12-34-56")
-//     1: "12"
-//     3: "56"
-func matchGroups(pre_pattern string, capture_groups []int, input string) []string {
+// matchGroupsByNumber returns a map where the key is the group number, and the value is the matched substring
+// For example: matchGroupsByNumber(`(\d\d)-(\d\d)-(\d\d)`, []int{1,3}, "12-34-56")
+//     ["12","56"]
+func matchGroupsByNumber(pre_pattern string, capture_groups []int, input string) []string {
 	preRegexp := regexp.MustCompile(pre_pattern)
 	submatches := preRegexp.FindAllStringSubmatchIndex(input, -1)
 	if len(submatches) != 1 {
