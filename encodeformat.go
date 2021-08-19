@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var debugging = true
+var debugging = false
 
 
 func encodeFormatEncode(pattern, encode_format string, capture_groups []int, input string) string {
@@ -26,15 +26,7 @@ func encodeFormatEncode(pattern, encode_format string, capture_groups []int, inp
 		pattern, encode_format, capture_groups, indices, strings.Join(encodedMatches, ","))
 	debug("Matched groups: %v\n", dump(re.FindAllStringSubmatch(input, -1)[0]))
 
-	encodedInput := input
-	for _, group := range capture_groups {
-		groupIndex := group * 2
-		start, end := indices[groupIndex], indices[groupIndex + 1]
-		if start >= 0 {
-			encodedInput = encodedInput[0:start] + encodedMatches[group] + encodedInput[end:]
-		}
-	}
-
+	encodedInput := replaceGroups(input, encodedMatches, indices, capture_groups)
 	debug("e input: %s\n-------- %s\n", input, encodedInput)
 
 	result := []byte{}
@@ -79,17 +71,7 @@ func encodeFormatDecode(pattern string, capture_groups []int, encodedInput strin
 	debug("Decoding pattern: %s, capture_groups: %v, indices: %v, encodedMatches: %v\n",
 		pattern, capture_groups, indices, dump(encodedMatches))
 
-	decodedInput := encodedInput
-	for _, group := range capture_groups {
-		groupIndex := 2 * group
-		start, end := indices[groupIndex], indices[groupIndex+1]
-		debug("Group %d, index %d, start %d, end %d\n", group, groupIndex, start, end)
-		if start >= 0 {
-			debug("Replacing group %d (%s) in encodedInput %s\n", group, encodedMatches[group-1], decodedInput)
-			decodedInput = decodedInput[0:start] + encodedMatches[group] + decodedInput[end:]
-		}
-	}
-
+	decodedInput := replaceGroups(encodedInput, encodedMatches, indices, capture_groups)
 	debug("d input: %s\n-------- %s\n", encodedInput, decodedInput)
 
 	return decodedInput
@@ -110,4 +92,17 @@ func debug(format string, args ...interface{}) {
 	if debugging {
 		fmt.Printf(format, args...)
 	}
+}
+
+func replaceGroups(source string, groupMatches []string, indices []int, groups []int) string {
+	result := source
+	for _, group := range groups {
+		groupIndex := 2 * group
+		start, end := indices[groupIndex], indices[groupIndex+1]
+		if start >= 0 {
+			result = result[0:start] + groupMatches[group] + result[end:]
+		}
+	}
+
+	return result
 }
